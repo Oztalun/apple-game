@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사과 게임</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; background: #c0ffc0; }
+        .game-container { position: relative; display: inline-block; padding: 20px; background: #009900; border-radius: 20px; }
+        canvas { background: #87CEEB; display: block; margin: auto; }
+        #score, #timer { font-size: 20px; color: white; }
+        #restart { display: none; padding: 10px; font-size: 16px; cursor: pointer; }
+        .timer-bar-container { position: absolute; right: -30px; top: 10px; width: 20px; height: 300px; background: white; border: 2px solid black; }
+        .timer-bar { width: 100%; height: 100%; background: green; }
+    </style>
+</head>
+<body>
+    <h1>사과 게임</h1>
+    <p id="score">점수: 0</p>
+    <div class="game-container">
+        <p id="timer">남은 시간: 120초</p>
+        <button id="restart" onclick="restartGame()">재시작</button>
+        <canvas id="gameCanvas" width="510" height="300"></canvas>
+        <div class="timer-bar-container">
+            <div id="timer-bar" class="timer-bar"></div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const timerBar = document.getElementById("timer-bar");
+        const rows = 10, cols = 17;
+        const appleSize = 30;
+        const apples = [];
+        let selectedApples = [];
+        let isDragging = false;
+        let startX, startY, endX, endY;
+        let score = 0;
+        let timeLeft = 120;
+        let gameActive = true;
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                apples.push({
+                    x: j * appleSize,
+                    y: i * appleSize,
+                    value: Math.floor(Math.random() * 9) + 1,
+                    collected: false,
+                    highlighted: false
+                });
+            }
+        }
+
+        function drawApples() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            apples.forEach(apple => {
+                if (!apple.collected) {
+                    ctx.beginPath();
+                    ctx.arc(apple.x + appleSize / 2, apple.y + appleSize / 2, appleSize / 2 - 2, 0, Math.PI * 2);
+                    ctx.fillStyle = apple.highlighted ? "green" : "red";
+                    ctx.fill();
+                    ctx.fillStyle = "white";
+                    ctx.font = "16px Arial";
+                    ctx.fillText(apple.value, apple.x + appleSize / 2 - 5, apple.y + appleSize / 2 + 5);
+                }
+            });
+            
+            if (isDragging) {
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+            }
+        }
+
+        function getSelectedApples() {
+            selectedApples = apples.filter(apple => 
+                !apple.collected &&
+                apple.x + appleSize > Math.min(startX, endX) && apple.x < Math.max(startX, endX) &&
+                apple.y + appleSize > Math.min(startY, endY) && apple.y < Math.max(startY, endY)
+            );
+            apples.forEach(apple => apple.highlighted = selectedApples.includes(apple));
+        }
+
+        function checkSum() {
+            let sum = selectedApples.reduce((acc, apple) => acc + apple.value, 0);
+            if (sum === 10) {
+                selectedApples.forEach(apple => apple.collected = true);
+                score += selectedApples.length;
+                document.getElementById("score").innerText = "점수: " + score;
+            }
+            apples.forEach(apple => apple.highlighted = false);
+        }
+
+        function updateTimer() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                document.getElementById("timer").innerText = "남은 시간: " + timeLeft + "초";
+                timerBar.style.height = (timeLeft / 120 * 100) + "%";
+                setTimeout(updateTimer, 1000);
+            } else {
+                gameActive = false;
+                document.getElementById("timer").innerText = "게임 종료! 최종 점수: " + score;
+                document.getElementById("restart").style.display = "block";
+            }
+        }
+
+        function restartGame() {
+            location.reload();
+        }
+
+        canvas.addEventListener("mousedown", (e) => {
+            if (!gameActive) return;
+            isDragging = true;
+            startX = e.offsetX;
+            startY = e.offsetY;
+            endX = startX;
+            endY = startY;
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (isDragging) {
+                endX = e.offsetX;
+                endY = e.offsetY;
+                getSelectedApples();
+                drawApples();
+            }
+        });
+
+        canvas.addEventListener("mouseup", (e) => {
+            if (!gameActive) return;
+            isDragging = false;
+            endX = e.offsetX;
+            endY = e.offsetY;
+            getSelectedApples();
+            checkSum();
+            drawApples();
+        });
+
+        drawApples();
+        updateTimer();
+    </script>
+</body>
+</html>
