@@ -20,7 +20,7 @@
     <div class="game-container">
         <p id="timer">남은 시간: 120초</p>
         <button id="restart" onclick="restartGame()">재시작</button>
-        <canvas id="gameCanvas" width="510" height="300"></canvas>
+        <canvas id="gameCanvas" width="720" height="480"></canvas>
         <div class="timer-bar-container">
             <div id="timer-bar" class="timer-bar"></div>
         </div>
@@ -30,7 +30,7 @@
         const ctx = canvas.getContext("2d");
         const timerBar = document.getElementById("timer-bar");
         const rows = 10, cols = 17;
-        const appleSize = 30;
+        const appleSize = 40;
         const apples = [];
         let selectedApples = [];
         let isDragging = false;
@@ -42,9 +42,9 @@
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < cols; j++) {
                 apples.push({
-                    x: j * appleSize,
-                    y: i * appleSize,
-                    value: Math.floor(Math.random() * 9) + 1,
+                    x: j * appleSize + 15,//각 사과의 좌표
+                    y: i * appleSize + 15,//
+                    value: Math.floor(Math.random() * 9) + 1,//랜덤 숫자
                     collected: false,
                     highlighted: false
                 });
@@ -56,7 +56,7 @@
             apples.forEach(apple => {
                 if (!apple.collected) {
                     ctx.beginPath();
-                    ctx.arc(apple.x + appleSize / 2, apple.y + appleSize / 2, appleSize / 2 - 2, 0, Math.PI * 2);
+                    ctx.arc(apple.x + appleSize / 2, apple.y + appleSize / 2, appleSize / 2 - 3, 0, Math.PI * 2);//원 생성
                     ctx.fillStyle = apple.highlighted ? "green" : "red";
                     ctx.fill();
                     ctx.fillStyle = "white";
