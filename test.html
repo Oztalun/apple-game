@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Countdown</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myCanvas" width="400" height="400"></canvas>
+  
+  <script>
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let countdown = 10;
+    let countdowntest = 10;
+    let countdownInterval;
+    let isCountingDown = false;
+    
+    // 버튼과 텍스트의 좌표 설정
+    const buttonWidth = 150;
+    const buttonHeight = 40;
+    const buttonX = (canvas.width - buttonWidth) / 2;
+    const buttonY = (canvas.height - buttonHeight) / 2 + 50;
+    
+    function drawButton() {
+      ctx.fillStyle = '#4CAF50'; // 버튼 색상
+      ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+      ctx.fillStyle = '#fff'; // 버튼 텍스트 색상
+      ctx.font = '20px Arial';
+      ctx.fillText('카운트다운 시작', buttonX + 20, buttonY + 25);
+    }
+    
+    function drawCountdown() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // 이전 화면 지우기
+      ctx.fillStyle = 'green'; // 배경을 초록색으로 설정
+      ctx.fillRect(0, 0, canvas.width, canvas.height); // 배경 그리기
+      drawButton(); // 버튼 다시 그리기
+      ctx.fillStyle = 'black';
+      ctx.font = '40px Arial';
+      //ver1
+      // ctx.fillText(countdown, canvas.width / 2 - 20, canvas.height / 2 - 50); // 카운트다운 숫자
+
+      //ver2
+      ctx.fillText(countdowntest.toFixed(1), canvas.width / 2 - 20, canvas.height / 2 - 50); // 카운트다운 숫자
+    }
+    
+    function startCountdown() {
+      if (isCountingDown) return; // 이미 카운트다운 중이면 다시 시작하지 않음
+      isCountingDown = true;
+      //ver1
+      //1000ms 확인
+      // countdownInterval = setInterval(() => {
+      //   if (countdown > 0) {
+      //     countdown--;
+      //     drawCountdown();
+      //   } else {
+      //     clearInterval(countdownInterval);
+      //     isCountingDown = false;
+      //   }
+      // }, 1000);
+
+      //ver2
+      // 100ms에서 최소화로 10~15초 뒤에 들어가면 1.5초가 지남
+      countdownInterval = setInterval(() => {
+        if (countdowntest > 0) {
+          countdowntest*=10;
+          countdowntest-=1;
+          countdowntest = Math.round(countdowntest)/10;
+          drawCountdown();
+        } else {
+          clearInterval(countdownInterval);
+          isCountingDown = false;
+        }
+      }, 100);
+    }
+    
+    // 버튼 클릭 이벤트
+    canvas.addEventListener('click', (e) => {
+      const mouseX = e.offsetX;
+      const mouseY = e.offsetY;
+      
+      if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
+          mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+        startCountdown();
+      }
+    });
+    
+    // 처음 그릴 화면
+    drawCountdown();
+  </script>
+</body>
+</html>
+
+<!-- js에서 setInterval은 윈도우 활성화 상태에서는 정상적으로 작동하지만 절전 모드(다른 윈도우에 의해 숨겨지거나 최소화)가 되면 해당 시간은 1000ms으로 하향 조정된다. -->
