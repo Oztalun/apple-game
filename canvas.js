@@ -9,8 +9,49 @@ window.onload = function () {
   const musiclevelcanvas = document.getElementById("musiclevelCanvas");
   const musiclevelctx = musiclevelcanvas.getContext("2d");
   
-  //음악
-  totalvolume = 1;
+  //게임 끝나고 restart, reset 버튼 위치 및 크기 변수
+  const middleX = 230,
+        middleY = 40,
+        offsetX = 69,
+        offsetupY = 230,
+        offsetdownY = 280,
+        btnX = middleX + offsetX,
+        btnshadowX = btnX + 2, 
+        upbtnY = middleY + offsetupY,
+        upbtnshadowY = upbtnY + 2,
+        downbtnY = middleY + offsetdownY,
+        downbtnshadowY = downbtnY + 2,
+        lenX = 120,
+        lenY = 30;
+
+  //시작 버튼 위치
+  const cx = 210;
+  const cy = 250;
+  const start_radius = 60;
+  
+  //light colors 위치
+  var txt_lc_x = 480,
+  txt_lc_y = 447;
+  var lightColorsWidth = ctx.measureText("Light Colors").width + 4;
+  //BGM 위치
+  var txt_bgm_x = txt_lc_x + 80, txt_bgm_y = 447;
+  var bgmWidth = ctx.measureText("BGM").width + 4;
+  //reset 위치
+  var txt_rs_x = 80,
+  txt_rs_y = 447;
+  //볼륨 삼각형
+  var TrStartX = txt_lc_x + 125,
+  TrStartY = 447,
+  TrHigh = 10,
+  TrWid = 70;
+  
+  //볼륨 위치 및 클릭 여부 변수
+  let startsoundimgX = 595, endsoundimgX = 660, soundimgX = endsoundimgX, soundimgY = 434, soundimglenX = 25, soundimglenY = 25, volumeclickactive = false;
+  let clickedXPosition;//soundimgX와의 거리 차이
+  let endgameactive = false;
+
+  //음악------------------------------------------------------------------------------------------------------------------
+  totalvolume = (endsoundimgX - startsoundimgX) / 65;
   intbgm = 1;
   lightcolors = 0;
   var bgm = new Audio("bgm/bgm.mp3");
@@ -51,64 +92,18 @@ window.onload = function () {
       stopBGM();
     }
   }
+  //음악------------------------------------------------------------------------------------------------------------------
 
-  //시작 버튼 이벤트
-  const cx = 210;
-  const cy = 250;
-  const start_radius = 60;
-  
-  //light colors 위치
-  var txt_lc_x = 480,
-      txt_lc_y = 447;
-  var lightColorsWidth = ctx.measureText("Light Colors").width + 4;
-  //BGM 위치
-  var txt_bgm_x = txt_lc_x + 80, txt_bgm_y = 447;
-  var bgmWidth = ctx.measureText("BGM").width + 4;
-  //reset 위치
-  var txt_rs_x = 80,
-  txt_rs_y = 447;
-  //볼륨 삼각형
-  var TrStartX = txt_lc_x + 125,
-      TrStartY = 447,
-      TrHigh = 10,
-      TrWid = 70;
-  
-  let startsoundimgX = 595, endsoundimgX = 660, soundimgX = startsoundimgX, soundimgY = 434, soundimglenX = 25, soundimglenY = 25, volumeclickactive = false;
   var volumeimg = new Image();
-  volumeimg.src = "img/8bell.png";
+  volumeimg.src = "img/8note.png";
   function sound() {
     volumeimg.onload = function () {
       musiclevelctx.drawImage(volumeimg, soundimgX, soundimgY, soundimglenX, soundimglenY);
     }
   }
 
-  function moveSoundImg(mouseX) {
-    if (mouseX!=soundimgX) {//기존 영역에서 움직이면(즉 볼륨을 다시 설정하면)
-      musiclevelctx.clearRect(startsoundimgX, soundimgY, soundimglenX, soundimglenY);//영역 지우고
-      volumeimg.onload = function () {//다시 그리기
-        musiclevelctx.drawImage(volumeimg, soundimgX, soundimgY, soundimglenX, soundimglenY);
-      }
-    }
-  }
   sound();
   
-  //게임 끝난 엔딩 호버, 클릭 위치
-  const middleX = 230,
-        middleY = 40,
-        offsetX = 69,
-        offsetupY = 230,
-        offsetdownY = 280,
-        btnX = middleX + offsetX,
-        btnshadowX = btnX + 2, 
-        upbtnY = middleY + offsetupY,
-        upbtnshadowY = upbtnY + 2,
-        downbtnY = middleY + offsetdownY,
-        downbtnshadowY = downbtnY + 2,
-        lenX = 120,
-        lenY = 30;
-  
-  //
-
   //볼륨 위치
   function volumePosition(mouseX, mouseY) {
     return (
@@ -157,6 +152,16 @@ window.onload = function () {
     );
   }
 
+  //게임 끝난 뒤 reset 버튼 위치
+  function endResetBtn(mouseX, mouseY) {
+    return (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= downbtnY && mouseY <= downbtnY + lenY);
+  }
+
+  //게임 끝난 뒤 restart 버튼 위치
+  function endRestartBtn(mouseX, mouseY) {
+    return (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= upbtnY && mouseY <= upbtnY + lenY);
+  }
+
   //버튼 클릭 이벤트 (시작 버튼 클릭 이벤트와 통합, 호버를 통합해서 클릭 이벤트도 통합하기로 함)
   function ClickEvent(event) {
     var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
@@ -165,7 +170,7 @@ window.onload = function () {
 
     // 클릭이 텍스트 영역 내에 있는지 확인
     var distance = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
-    if (BgmPosition(mouseX, mouseY)) {
+    if (BgmPosition(mouseX, mouseY)) {//bgm 버튼 클릭
       if (intbgm == 0) {
         intbgm = 1;
       } else {
@@ -174,7 +179,7 @@ window.onload = function () {
       clicksound();
       drawBox();
       BgmStart();
-    } else if (LightColorsPosition(mouseX, mouseY)) {
+    } else if (LightColorsPosition(mouseX, mouseY)) {//lc버튼 클릭
       if (lightcolors == 0) {
         lightcolors = 1;
       } else {
@@ -182,18 +187,27 @@ window.onload = function () {
       }
       clicksound();
       drawBox();
-    } else if (ResetPosition(mouseX, mouseY)) {
+    } else if (ResetPosition(mouseX, mouseY)) {//reset 버튼 클릭
       clicksound();
       gameActive = false;
+      endgameactive = false;
       BgmStart();
       startdraw();
-      overlaycanvas.removeEventListener("click", endClickEvent);
-      overlaycanvas.removeEventListener("mousemove", endHoverEvent);
-    } else if (distance <= start_radius && !gameActive) {
+    } else if (distance <= start_radius && !gameActive && !endgameactive) {// 시작 버튼 클릭
       //시작 버튼 클릭
       clicksound();
       gamestart();
       requestAnimationFrame(gameLoop);
+    } else if (endgameactive && endRestartBtn(mouseX, mouseY)) {//게임 끝나고 restart 클릭
+      endgameactive = false;
+      clicksound();
+      gamestart();
+      requestAnimationFrame(gameLoop);
+    } else if (endgameactive && endResetBtn(mouseX, mouseY)) {//게임 끝나고 reset 클릭
+      endgameactive = false;
+      clicksound();
+      startdraw();
+      BgmStart();
     }
   }
 
@@ -202,64 +216,50 @@ window.onload = function () {
     var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
     var mouseX = event.clientX - rect.left; //화면에서 현재 마우스의 위치 - 캔버스의 위치
     var mouseY = event.clientY - rect.top;
+    var distance = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
 
     // 어느 한 영역이라도 침범하면 커서를 pointer로 설정
     if (
-      LightColorsPosition(mouseX, mouseY) || 
-      BgmPosition(mouseX, mouseY) || 
-      ResetPosition(mouseX, mouseY) || 
-      volumePosition(mouseX, mouseY)
+      LightColorsPosition(mouseX, mouseY) || BgmPosition(mouseX, mouseY) ||
+      ResetPosition(mouseX, mouseY) || volumePosition(mouseX, mouseY) 
     ) {
       overlaycanvas.style.cursor = "pointer";
-    } else if (!gameActive) {
-      var distance = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
+    } else if (!gameActive && distance <= start_radius && !endgameactive) {
       // 원 영역에 침범하면 커서 변경
-      if (distance <= start_radius) {
-        overlaycanvas.style.cursor = "pointer";
-      } else {
-        overlaycanvas.style.cursor = "default";
-      }
-    } else {
-      overlaycanvas.style.cursor = "default";
-    }
-  }
-
-  function endClickEvent(event) {
-    var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
-    var mouseX = event.clientX - rect.left; //화면에서 현재 마우스의 위치 - 캔버스의 위치
-    var mouseY = event.clientY - rect.top;
-
-    // 클릭이 텍스트 영역 내에 있는지 확인
-    const area1 = (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= upbtnY && mouseY <= upbtnY + lenY)
-    const area2 = (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= downbtnY && mouseY <= downbtnY + lenY)
-    if (area1) {
-      overlaycanvas.removeEventListener("click", endClickEvent);
-      overlaycanvas.removeEventListener("mousemove", endHoverEvent);
-      clicksound();
-      gamestart();
-      requestAnimationFrame(gameLoop);
-    } else if (area2) {
-      console.log(gameActive);
-      overlaycanvas.removeEventListener("click", endClickEvent);
-      overlaycanvas.removeEventListener("mousemove", endHoverEvent);
-      clicksound();
-      startdraw();
-      BgmStart();
-    }
-  }
-
-  function endHoverEvent(event) {
-    var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
-    var mouseX = event.clientX - rect.left; //화면에서 현재 마우스의 위치 - 캔버스의 위치
-    var mouseY = event.clientY - rect.top;
-
-    // 클릭이 텍스트 영역 내에 있는지 확인
-    const area1 = (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= upbtnY && mouseY <= upbtnY + lenY)
-    const area2 = (mouseX>=btnX && mouseX<=btnX + lenX && mouseY >= downbtnY && mouseY <= downbtnY + lenY)
-    if (area1 || area2) {
+      overlaycanvas.style.cursor = "pointer";
+    } else if (endgameactive && (endRestartBtn(mouseX, mouseY) || endResetBtn(mouseX, mouseY))) {
       overlaycanvas.style.cursor = "pointer";
     } else {
       overlaycanvas.style.cursor = "default";
+    }
+
+    
+    //볼륨 이동 함수
+    if (volumeclickactive) {//클릭 했을 때
+      if (mouseX - clickedXPosition >= startsoundimgX && mouseX - clickedXPosition <= endsoundimgX) {//볼륨 설정 가능한 영역에서 움직이면(즉 볼륨을 다시 설정하면)
+        soundimgX = mouseX - clickedXPosition;//마우스 좌표 - 차이 = 음표의 좌표
+        musiclevelctx.clearRect(startsoundimgX, soundimgY, endsoundimgX + soundimgX, soundimglenY);//영역 지우고
+        musiclevelctx.drawImage(volumeimg, soundimgX, soundimgY, soundimglenX, soundimglenY);
+        bgm.volume = (soundimgX - startsoundimgX) / 65;
+      }
+    }
+  }
+
+  //볼륨 클릭다운 이벤트
+  function volumeClickdownEvent(event) {
+    var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
+    var mouseX = event.clientX - rect.left; //화면에서 현재 마우스의 위치 - 캔버스의 위치
+    var mouseY = event.clientY - rect.top;
+    if (volumePosition(mouseX, mouseY)) {//volume 클릭
+      volumeclickactive = true;
+      clickedXPosition = mouseX - soundimgX;//볼륨 시작 좌표와의 차이(길이) 마우스 좌표 - 음표의 좌표 = 차이  => 마우스 좌표 - 차이 = 음표의 좌표
+    }
+  }
+
+  //볼륨 클릭업 이벤트
+  function volumeClickupEvent() {
+    if (volumeclickactive) {
+      volumeclickactive = false;
     }
   }
 
@@ -269,6 +269,10 @@ window.onload = function () {
     overlaycanvas.addEventListener("click", ClickEvent);
     // 마우스가 텍스트 영역에 있을 때 커서 변경 함수
     overlaycanvas.addEventListener("mousemove", CursorMoveEvent);
+    //볼륨 클릭다운 이벤트
+    overlaycanvas.addEventListener("mousedown", volumeClickdownEvent);
+    //볼륨 이동 후 클릭업 시 위 코드를 무력화시키는 기능
+    overlaycanvas.addEventListener("mouseup", volumeClickupEvent);
   }
   StandardListener();
 
@@ -342,7 +346,11 @@ window.onload = function () {
 
   //클릭 할 때
   function click_mouse(e) {
+    var rect = overlaycanvas.getBoundingClientRect(); //캔버스의 위치를 가져오는 함수
+    var mouseX = e.clientX - rect.left; //화면에서 현재 마우스의 위치 - 캔버스의 위치
+    var mouseY = e.clientY - rect.top;
     if (!gameActive) return;
+    if (volumePosition(mouseX, mouseY)) return;
     isDragging = true;
     startX = e.offsetX;
     startY = e.offsetY;
@@ -489,7 +497,7 @@ window.onload = function () {
       let now = performance.now();
       let elapsedTime = (now - startTime) / 1000; // 경과 시간 (초 단위)
 
-      if (elapsedTime >= 5) {
+      if (elapsedTime >= 120) {
         console.log("게임 종료!");
         endgame();
         return;
@@ -505,6 +513,7 @@ window.onload = function () {
 
   function endgame() {
     endingsound()
+    endgameactive = true;
     gameActive = false;
     isDragging = false;
     BgmStart();
@@ -549,15 +558,10 @@ window.onload = function () {
       ctx.textBaseline = "middle"; // 텍스트를 박스 중앙에 정렬
       ctx.fillText("reset", middleX + offsetX + 61, middleY + offsetdownY + 16);
       
-      overlaycanvas.addEventListener("click", endClickEvent);
-      // 마우스가 텍스트 영역에 있을 때 커서 변경 함수
-      overlaycanvas.addEventListener("mousemove", endHoverEvent);
     };
   }
 
 
   drawframe(); //프레임은 절대적
   startdraw();
-  appledropsound();
-  endingsound();
 };
